@@ -1,4 +1,4 @@
-# Hamester Run (3-lane vertical runner)
+# Hamster Run (3-lane vertical runner)
 
 ## Security / API keys
 
