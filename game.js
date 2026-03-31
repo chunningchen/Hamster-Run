@@ -62,11 +62,12 @@ function loadBackgroundArt() {
 }
 loadBackgroundArt();
 
-const stageValueEl = document.getElementById("stageValue");
-const foodValueEl = document.getElementById("foodValue");
 const heartsValueEl = document.getElementById("heartsValue");
 const bannerEl = document.getElementById("banner");
-const goalWrapEl = document.getElementById("goalWrap");
+const hudSepBeforeGoalEl = document.getElementById("hudSepBeforeGoal");
+const hudGoalPartEl = document.getElementById("hudGoalPart");
+const hudSepBeforeHeartsEl = document.getElementById("hudSepBeforeHearts");
+const goalMeterWrapEl = document.getElementById("goalMeterWrap");
 const goalStageLabelEl = document.getElementById("goalStageLabel");
 const goalTextEl = document.getElementById("goalText");
 const goalFillEl = document.getElementById("goalFill");
@@ -98,36 +99,12 @@ function syncBgmToGameState() {
 const nameModalEl = document.getElementById("nameModal");
 const playerNameInputEl = document.getElementById("playerNameInput");
 const startGameBtnEl = document.getElementById("startGameBtn");
-const leaderboardBodyEl = document.getElementById("leaderboardBody");
 const gameOverModalEl = document.getElementById("gameOverModal");
 const leaderboardBodyGameOverEl = document.getElementById("leaderboardBodyGameOver");
 const tryAgainBtnEl = document.getElementById("tryAgainBtn");
 
 const LEADERBOARD_LS_KEY = "hamsterRunnerLeaderboard_v2";
 const LEADERBOARD_MAX = 10;
-
-const VISIT_COUNT_LS_KEY = "hamsterRunner_pageVisits_v1";
-
-/** Increments once per page load; stored in localStorage. */
-function initVisitCounter() {
-  const el = document.getElementById("visitCountValue");
-  if (!el) return;
-  let n = 0;
-  try {
-    const raw = localStorage.getItem(VISIT_COUNT_LS_KEY);
-    const parsed = parseInt(raw ?? "", 10);
-    if (Number.isFinite(parsed) && parsed >= 0) n = parsed;
-  } catch {
-    n = 0;
-  }
-  n += 1;
-  try {
-    localStorage.setItem(VISIT_COUNT_LS_KEY, String(n));
-  } catch {
-    /* storage unavailable */
-  }
-  el.textContent = String(n);
-}
 
 /** Local Sunday 00:00:00 — leaderboard resets each new week at that instant. */
 function getLocalWeekStartMs(t = Date.now()) {
@@ -583,7 +560,6 @@ function renderLeaderboardInto(tbodyEl, highlightDateIso = null) {
 }
 
 function renderLeaderboard() {
-  renderLeaderboardInto(leaderboardBodyEl, null);
   renderLeaderboardInto(leaderboardBodyGameOverEl, lastGameOverLeaderboardHighlight);
 }
 
@@ -666,50 +642,10 @@ async function onSaveLeaderboardImage() {
   }
 }
 
-async function onShareLeaderboardNative() {
-  try {
-    const blob = await blobPngFromGameOverShareCard();
-    if (!blob) return;
-    const file = new File([blob], "hamester-run-leaderboard.png", {
-      type: "image/png",
-    });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "Hamester Run",
-        text: "My Hamester Run leaderboard (this device).",
-      });
-      return;
-    }
-  } catch (e) {
-    if (e && e.name === "AbortError") return;
-    console.warn(e);
-  }
-  await onSaveLeaderboardImage();
-}
-
-function initLeaderboardShareButtons() {
+function initGameOverSaveButton() {
   document
     .getElementById("saveLeaderboardBtn")
     ?.addEventListener("click", () => void onSaveLeaderboardImage());
-  document
-    .getElementById("shareLeaderboardBtn")
-    ?.addEventListener("click", () => void onShareLeaderboardNative());
-
-  const shareBtn = document.getElementById("shareLeaderboardBtn");
-  if (!shareBtn || !navigator.canShare) {
-    return;
-  }
-  try {
-    const probe = new File([new Uint8Array([137, 80, 78, 71])], "p.png", {
-      type: "image/png",
-    });
-    if (!navigator.canShare({ files: [probe] })) {
-      shareBtn.hidden = true;
-    }
-  } catch {
-    shareBtn.hidden = true;
-  }
 }
 
 function hideNameModal() {
@@ -775,8 +711,6 @@ function resetGame(options) {
 }
 
 function syncHud() {
-  if (stageValueEl) stageValueEl.textContent = String(state.stage);
-  if (foodValueEl) foodValueEl.textContent = String(state.foodCount);
   if (heartsValueEl) {
     const cur = Math.floor(state.hpHalves / 2);
     heartsValueEl.textContent = `${cur}/${MAX_HEARTS}`;
@@ -788,13 +722,19 @@ function syncHud() {
   }
 
   const goal = stageGoalForHud(state.stage, state.foodCount);
-  if (!goalWrapEl || !goalTextEl || !goalFillEl) return;
+  if (!goalTextEl || !goalFillEl) return;
+  if (goalStageLabelEl) goalStageLabelEl.textContent = `Stage ${state.stage}`;
   if (!goal.visible) {
-    goalWrapEl.classList.add("hidden");
+    hudSepBeforeGoalEl?.classList.add("hidden");
+    hudGoalPartEl?.classList.add("hidden");
+    hudSepBeforeHeartsEl?.classList.remove("hidden");
+    goalMeterWrapEl?.classList.add("hidden");
     return;
   }
-  goalWrapEl.classList.remove("hidden");
-  if (goalStageLabelEl) goalStageLabelEl.textContent = `Stage ${state.stage}`;
+  hudSepBeforeGoalEl?.classList.remove("hidden");
+  hudGoalPartEl?.classList.remove("hidden");
+  hudSepBeforeHeartsEl?.classList.remove("hidden");
+  goalMeterWrapEl?.classList.remove("hidden");
   goalTextEl.textContent = `${goal.current} / ${goal.target}`;
   goalFillEl.style.width = `${clamp(goal.current / goal.target, 0, 1) * 100}%`;
 }
@@ -1488,17 +1428,42 @@ function moveLane(dir) {
 }
 
 function togglePause() {
-  if (state.gameOver) return;
+  if (state.gameOver || isNameGateActive() || isCountdownActive()) return;
   state.paused = !state.paused;
-  if (state.paused) showBanner("Paused — press Space to resume", null);
-  else hideBanner();
+  if (state.paused) {
+    showBanner("Paused — double-tap or Space to resume", null);
+  } else {
+    hideBanner();
+  }
   syncBgmToGameState();
 }
 
+/** Second touch within this window (same canvas) toggles pause instead of moving. */
+let lastTouchTapMs = 0;
+const DOUBLE_TAP_PAUSE_MS = 380;
+
 function onPointerDown(e) {
-  // Mobile-friendly: tap left/right side to change lanes.
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
+  const now = performance.now();
+  const touchLike = e.pointerType === "touch" || e.pointerType === "pen";
+
+  if (
+    touchLike &&
+    !isNameGateActive() &&
+    !state.gameOver &&
+    now - lastTouchTapMs < DOUBLE_TAP_PAUSE_MS
+  ) {
+    lastTouchTapMs = 0;
+    togglePause();
+    e.preventDefault();
+    return;
+  }
+
+  if (touchLike) {
+    lastTouchTapMs = now;
+  }
+
   if (x < rect.width * 0.5) moveLane(-1);
   else moveLane(1);
 }
@@ -1515,7 +1480,7 @@ function loop(ts) {
 }
 
 window.addEventListener("keydown", onKeyDown, { passive: false });
-canvas.addEventListener("pointerdown", onPointerDown);
+canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
 
 let state;
 resetGame({ silent: true });
@@ -1531,8 +1496,7 @@ playerNameInputEl?.addEventListener("keydown", (e) => {
 
 tryAgainBtnEl?.addEventListener("click", () => returnToWelcomeFromGameOver());
 
-initVisitCounter();
-initLeaderboardShareButtons();
+initGameOverSaveButton();
 renderLeaderboard();
 showNameModal();
 

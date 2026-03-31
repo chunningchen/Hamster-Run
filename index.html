@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Hamester Run</title>
+    <meta
+      name="description"
+      content="Run, dodge obstacles, and collect food in Hamester Run — a lane runner in your browser."
+    />
+    <link rel="icon" type="image/png" href="./art/thumbnail.png" />
+    <link rel="apple-touch-icon" href="./art/thumbnail.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Hamester Run" />
+    <meta
+      property="og:description"
+      content="Run, dodge obstacles, and collect food in Hamester Run — a lane runner in your browser."
+    />
+    <meta property="og:image" content="./art/thumbnail.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hamester Run" />
+    <meta
+      name="twitter:description"
+      content="Run, dodge obstacles, and collect food in Hamester Run — a lane runner in your browser."
+    />
+    <meta name="twitter:image" content="./art/thumbnail.png" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -44,7 +64,7 @@
 
     <div
       id="gameOverModal"
-      class="modal-overlay modal-overlay--welcome hidden"
+      class="modal-overlay modal-overlay--gameover hidden"
       role="dialog"
       aria-modal="true"
       aria-labelledby="gameOverTitle"
@@ -54,12 +74,11 @@
         class="modal-card--welcome modal-card--gameover-sheet"
       >
         <div class="welcome-header">
-          <h2 id="gameOverTitle" class="welcome-title">Game over</h2>
+          <h2 id="gameOverTitle" class="welcome-title">Your Best Scores</h2>
         </div>
         <div class="welcome-frost">
-          <p class="welcome-hint">Your top 10 — saved on this device only</p>
           <div class="leaderboard-scroll leaderboard-scroll--modal">
-            <table class="leaderboard-table--modal" aria-label="Top 10 leaderboard">
+            <table class="leaderboard-table--modal" aria-label="Your best scores">
               <thead>
                 <tr>
                   <th scope="col">Date</th>
@@ -71,12 +90,9 @@
               <tbody id="leaderboardBodyGameOver"></tbody>
             </table>
           </div>
-          <div class="gameover-actions" role="group" aria-label="Share leaderboard">
+          <div class="gameover-actions" role="group" aria-label="Save leaderboard">
             <button type="button" id="saveLeaderboardBtn" class="gameover-action-btn">
               Save image
-            </button>
-            <button type="button" id="shareLeaderboardBtn" class="gameover-action-btn">
-              Share…
             </button>
           </div>
           <button type="button" id="tryAgainBtn" class="welcome-play-btn">Try again</button>
@@ -85,121 +101,72 @@
     </div>
 
     <div class="wrap">
-      <header class="topbar">
-        <div class="title title-block">
-          <div class="game-name">Hamester Run</div>
-          <div class="game-sub">3 lanes • 10 stages • eat food • avoid hazards</div>
-        </div>
-        <div class="stats">
-          <div class="stat">
-            <div class="label">Stage</div>
-            <div id="stageValue" class="value">1</div>
-          </div>
-          <div class="stat">
-            <div class="label">Food</div>
-            <div id="foodValue" class="value">0</div>
-          </div>
-          <div class="stat">
-            <div class="label">Hearts</div>
-            <div id="heartsValue" class="value">5/5</div>
-          </div>
-        </div>
-      </header>
-
       <div class="layout-mid">
-        <aside class="visitor-rail" aria-label="Visit counter">
-          <div class="visitor-panel">
-            <div class="visitor-panel__title">Visits</div>
-            <div id="visitCountValue" class="visitor-panel__value" aria-live="polite">—</div>
-          </div>
-        </aside>
         <div class="center-col">
           <div class="frame">
             <canvas id="gameCanvas" width="420" height="720"></canvas>
-          </div>
-        </div>
 
-        <div class="rail-stack">
-          <aside class="side-rail" aria-label="Goals and controls">
-            <div id="banner" class="banner hidden" role="status" aria-live="polite"></div>
-            <div id="goalWrap" class="goal">
-              <div id="goalStageLabel" class="goal-stage-title">Stage 1</div>
-              <div class="goal-progress-row">
-                <span class="goal-sublabel">Goal</span>
-                <span id="goalText" class="goal-text">0 / 10</span>
-              </div>
-              <div class="goal-meter" aria-hidden="true">
-                <div id="goalFill" class="goal-fill" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="help help-rail">
-              <div><kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd> lanes</div>
-              <div><kbd>Space</kbd> pause • <kbd>R</kbd> restart</div>
-            </div>
-          </aside>
-
-          <div class="legend">
-            <div class="legend-col legend-col-good" aria-label="Good — collect these">
-              <div class="legend-title-text">Good</div>
-              <div class="legend-items">
-                <div class="legend-tile legend-tile-good" title="Sunflower seeds">
-                  <img src="art/sunflower_seed.png" width="30" height="30" alt="" loading="lazy" />
+            <div class="frame-top-ui" aria-hidden="false">
+              <div class="play-hud">
+                <div class="play-hud__title-row">
+                  <span class="play-hud__title">Hamester Run</span>
                 </div>
-                <div class="legend-tile legend-tile-good" title="Popcorn">
-                  <img src="art/popcorn.png" width="30" height="30" alt="" loading="lazy" />
+                <div class="play-hud__stage-goal-line">
+                  <span id="goalStageLabel" class="play-hud__stage-part">Stage 1</span>
+                  <span id="hudSepBeforeGoal" class="play-hud__mid-dot" aria-hidden="true">·</span>
+                  <span id="hudGoalPart" class="play-hud__goal-part">
+                    <span class="play-hud__goal-label">Goal</span>
+                    <span id="goalText" class="play-hud__goal-text">0 / 10</span>
+                  </span>
+                  <span id="hudSepBeforeHearts" class="play-hud__mid-dot" aria-hidden="true">·</span>
+                  <div class="play-hud__hearts" aria-label="Hearts">
+                    <span class="play-hud__hearts-icon" aria-hidden="true">♥</span>
+                    <span id="heartsValue" class="play-hud__hearts-value">5/5</span>
+                  </div>
                 </div>
-                <div class="legend-tile legend-tile-good" title="Carrot">
-                  <img src="art/carrot.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-good legend-tile-heart" title="Red heart — restores one heart">
-                  <img src="art/redheart.png" width="30" height="30" alt="" loading="lazy" />
+                <div id="goalMeterWrap" class="play-hud__meter" aria-hidden="true">
+                  <div id="goalFill" class="play-hud__meter-fill" style="width: 0%"></div>
                 </div>
               </div>
-            </div>
-            <div class="legend-col legend-col-bad" aria-label="Avoid — bad food and barriers">
-              <div class="legend-title-text">Avoid</div>
-              <div class="legend-items">
-                <div class="legend-tile legend-tile-bad" title="Meat">
-                  <img src="art/meat.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-bad" title="Candy">
-                  <img src="art/candy.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-bad" title="Ice cream">
-                  <img src="art/icecream.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-bad" title="Chocolate">
-                  <img src="art/chocolate.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-barrier" title="Rock">
-                  <img src="art/rocks.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-barrier" title="Tree">
-                  <img src="art/tree.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-barrier" title="Bush">
-                  <img src="art/bush.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-                <div class="legend-tile legend-tile-barrier" title="Cat">
-                  <img src="art/cat.png" width="30" height="30" alt="" loading="lazy" />
-                </div>
-              </div>
+              <div id="banner" class="play-banner hidden" role="status" aria-live="polite"></div>
             </div>
 
-            <div class="leaderboard-wrap leaderboard-wrap--under-avoid">
-              <div class="leaderboard-heading">Top 10 <span class="leaderboard-heading-note">(this device)</span></div>
-              <div class="leaderboard-scroll">
-                <table class="leaderboard-table" aria-label="Top 10 scores">
-                  <thead>
-                    <tr>
-                      <th scope="col">Date</th>
-                      <th scope="col">Player name</th>
-                      <th scope="col">Score</th>
-                      <th scope="col">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody id="leaderboardBody"></tbody>
-                </table>
+            <div class="lane-guides" aria-hidden="true">
+              <div class="lane-guides__half lane-guides__half--left">
+                <svg
+                  class="lane-guides__chevron"
+                  viewBox="0 0 48 120"
+                  width="40"
+                  height="100"
+                  focusable="false"
+                >
+                  <path
+                    d="M 32 12 L 12 60 L 32 108"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <div class="lane-guides__half lane-guides__half--right">
+                <svg
+                  class="lane-guides__chevron"
+                  viewBox="0 0 48 120"
+                  width="40"
+                  height="100"
+                  focusable="false"
+                >
+                  <path
+                    d="M 16 12 L 36 60 L 16 108"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
               </div>
             </div>
           </div>
