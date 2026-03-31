@@ -7,6 +7,20 @@ if (!ctx) {
   throw new Error("Could not get 2D canvas context");
 }
 
+/** Narrow viewports: block pinch-zoom; pairs with viewport meta + CSS touch-action for stable scale. */
+(function lockMobileViewportZoom() {
+  if (!window.matchMedia("(max-width: 768px)").matches) return;
+  const opts = { passive: false };
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    },
+    opts
+  );
+  document.addEventListener("gesturestart", (e) => e.preventDefault(), opts);
+})();
+
 const scratchCanvas = document.createElement("canvas");
 const scratchCtx = scratchCanvas.getContext("2d");
 

@@ -803,6 +803,24 @@ canvas {
     touch-action: manipulation;
   }
 
+  /* Block double-tap zoom on most of the UI; exceptions below */
+  .wrap,
+  .wrap *,
+  #nameModal,
+  #nameModal *,
+  #gameOverModal,
+  #gameOverModal * {
+    touch-action: manipulation;
+  }
+
+  #nameModal .welcome-input {
+    touch-action: auto;
+  }
+
+  #gameOverModal .gameover-panel__scroll {
+    touch-action: pan-y !important;
+  }
+
   .wrap {
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(8px, env(safe-area-inset-right, 0px));
@@ -852,6 +870,7 @@ canvas {
 
   .gameover-panel {
     width: min(340px, 94vw);
+    --go-records-shift-y: 60px;
   }
 
   .game-credit {
