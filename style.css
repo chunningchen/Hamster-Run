@@ -510,7 +510,7 @@ body {
 
 #gameOverModal .modal-card--gameover-sheet.gameover-panel {
   overflow: visible;
-  transform: translateY(-50px);
+  transform: translateY(-40px);
 }
 
 .modal-card {
@@ -874,7 +874,7 @@ canvas {
   }
 
   #gameOverModal .modal-card--gameover-sheet.gameover-panel {
-    transform: translateY(-10px);
+    transform: translateY(0);
   }
 
   .game-credit {
