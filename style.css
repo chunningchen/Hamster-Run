@@ -106,12 +106,13 @@ body {
   max-width: 420px;
 }
 
-/* HUD + messages overlaid at top of playfield (pointer-events none). */
+/* HUD + messages: stacked in same grid cell as canvas (reliable overlay on mobile). */
 .frame-top-ui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -132,7 +133,36 @@ body {
 }
 
 .play-hud__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   min-width: 0;
+}
+
+.play-hud__pause-btn {
+  flex-shrink: 0;
+  pointer-events: auto;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.play-hud__pause-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.play-hud__pause-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 2px;
 }
 
 .play-hud__title {
@@ -146,12 +176,20 @@ body {
 
 .play-hud__stage-goal-line {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px 8px;
   font-size: 12px;
   line-height: 1.25;
   min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.play-hud__stage-goal-line::-webkit-scrollbar {
+  display: none;
 }
 
 .play-hud__stage-part {
@@ -604,13 +642,29 @@ body {
   position: relative;
   width: min(420px, 100%);
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+  align-items: start;
+}
+
+.frame > canvas {
+  grid-column: 1;
+  grid-row: 1;
+  z-index: 0;
+  align-self: start;
+  justify-self: stretch;
 }
 
 /* Mobile: 50% tap zones — white ~50% opacity chevrons near the hamster (pointer-events none). */
 .lane-guides {
   display: none;
-  position: absolute;
-  inset: 0;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: stretch;
+  justify-self: stretch;
+  width: 100%;
+  min-height: 100%;
   z-index: 2;
   pointer-events: none;
   border-radius: 18px;

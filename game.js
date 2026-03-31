@@ -711,6 +711,20 @@ function resetGame(options) {
 }
 
 function syncHud() {
+  const pauseBtn = document.getElementById("pauseToggleBtn");
+  if (pauseBtn) {
+    const ingame =
+      state.running &&
+      !state.gameOver &&
+      !isNameGateActive() &&
+      !isCountdownActive();
+    pauseBtn.hidden = !ingame;
+    if (ingame) {
+      pauseBtn.textContent = state.paused ? "Resume" : "Pause";
+      pauseBtn.setAttribute("aria-label", state.paused ? "Resume game" : "Pause game");
+    }
+  }
+
   if (heartsValueEl) {
     const cur = Math.floor(state.hpHalves / 2);
     heartsValueEl.textContent = `${cur}/${MAX_HEARTS}`;
@@ -1431,37 +1445,22 @@ function togglePause() {
   if (state.gameOver || isNameGateActive() || isCountdownActive()) return;
   state.paused = !state.paused;
   if (state.paused) {
-    showBanner("Paused — double-tap or Space to resume", null);
+    showBanner("Paused — tap Resume or the playfield, or press Space", null);
   } else {
     hideBanner();
   }
+  syncHud();
   syncBgmToGameState();
 }
-
-/** Second touch within this window (same canvas) toggles pause instead of moving. */
-let lastTouchTapMs = 0;
-const DOUBLE_TAP_PAUSE_MS = 380;
 
 function onPointerDown(e) {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
-  const now = performance.now();
-  const touchLike = e.pointerType === "touch" || e.pointerType === "pen";
 
-  if (
-    touchLike &&
-    !isNameGateActive() &&
-    !state.gameOver &&
-    now - lastTouchTapMs < DOUBLE_TAP_PAUSE_MS
-  ) {
-    lastTouchTapMs = 0;
+  if (!isNameGateActive() && !state.gameOver && state.paused) {
     togglePause();
     e.preventDefault();
     return;
-  }
-
-  if (touchLike) {
-    lastTouchTapMs = now;
   }
 
   if (x < rect.width * 0.5) moveLane(-1);
@@ -1495,6 +1494,12 @@ playerNameInputEl?.addEventListener("keydown", (e) => {
 });
 
 tryAgainBtnEl?.addEventListener("click", () => returnToWelcomeFromGameOver());
+
+document.getElementById("pauseToggleBtn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  togglePause();
+});
 
 initGameOverSaveButton();
 renderLeaderboard();
