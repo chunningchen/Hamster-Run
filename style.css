@@ -873,6 +873,10 @@ canvas {
     --go-records-shift-y: 60px;
   }
 
+  #gameOverModal .modal-card--gameover-sheet.gameover-panel {
+    transform: translateY(-30px);
+  }
+
   .game-credit {
     font-size: 12px;
     margin-top: 10px;
