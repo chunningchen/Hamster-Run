@@ -744,7 +744,7 @@ async function onSaveLeaderboardImage() {
   try {
     const blob = await blobPngFromGameOverShareCard();
     if (!blob) return;
-    const filename = `hamester-run-leaderboard-${Date.now()}.png`;
+    const filename = `hamster-run-leaderboard-${Date.now()}.png`;
 
     /* Desktop / typical web: save straight to Downloads (blob + download attribute). */
     if (!isLikelyIOS()) {
@@ -756,7 +756,7 @@ async function onSaveLeaderboardImage() {
 
     if (navigator.share && navigator.canShare) {
       try {
-        const shareData = { files: [file], title: "Hamester Run", text: "Your best scores" };
+        const shareData = { files: [file], title: "Hamster Run", text: "Your best scores" };
         if (navigator.canShare(shareData)) {
           await navigator.share(shareData);
           return;

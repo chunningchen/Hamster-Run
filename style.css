@@ -874,7 +874,7 @@ canvas {
   }
 
   #gameOverModal .modal-card--gameover-sheet.gameover-panel {
-    transform: translateY(-30px);
+    transform: translateY(-10px);
   }
 
   .game-credit {
