@@ -69,33 +69,44 @@
       aria-modal="true"
       aria-labelledby="gameOverTitle"
     >
-      <div
-        id="gameOverShareCard"
-        class="modal-card--welcome modal-card--gameover-sheet"
-      >
-        <div class="welcome-header">
-          <h2 id="gameOverTitle" class="welcome-title">Your Best Scores</h2>
-        </div>
-        <div class="welcome-frost">
-          <div class="leaderboard-scroll leaderboard-scroll--modal">
-            <table class="leaderboard-table--modal" aria-label="Your best scores">
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Player name</th>
-                  <th scope="col">Score</th>
-                  <th scope="col">Time</th>
-                </tr>
-              </thead>
-              <tbody id="leaderboardBodyGameOver"></tbody>
-            </table>
+      <div id="gameOverShareCard" class="modal-card--gameover-sheet gameover-panel">
+        <h2 id="gameOverTitle" class="gameover-sr-only">Your Best Scores</h2>
+        <div class="gameover-panel__aspect">
+          <img
+            class="gameover-panel__frame"
+            src="./art/leaderboard.png"
+            width="1024"
+            height="1536"
+            alt=""
+            decoding="async"
+          />
+          <div class="gameover-panel__layer">
+            <div class="leaderboard-scroll leaderboard-scroll--modal gameover-panel__scroll">
+              <table class="leaderboard-table--modal gameover-panel__table" aria-label="Your best scores">
+                <thead class="gameover-panel__thead">
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Player name</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Time</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardBodyGameOver"></tbody>
+              </table>
+            </div>
+            <button
+              type="button"
+              id="saveLeaderboardBtn"
+              class="gameover-hitbtn gameover-hitbtn--save"
+              aria-label="Save image"
+            ></button>
+            <button
+              type="button"
+              id="tryAgainBtn"
+              class="gameover-hitbtn gameover-hitbtn--play"
+              aria-label="Play again"
+            ></button>
           </div>
-          <div class="gameover-actions" role="group" aria-label="Save leaderboard">
-            <button type="button" id="saveLeaderboardBtn" class="gameover-action-btn">
-              Save image
-            </button>
-          </div>
-          <button type="button" id="tryAgainBtn" class="welcome-play-btn">Try again</button>
         </div>
       </div>
     </div>

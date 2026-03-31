@@ -1,15 +1,12 @@
-# Hamester Run (3-lane vertical runner)
+# Hamster Run (3-lane vertical runner)
 
 This game is **static** (HTML, CSS, JavaScript only). **No API keys** or backend are required.
 
 ## Leaderboard & sharing
 
-Scores are stored in **`localStorage` on this browser only** (top 10 for the current calendar week on the device). They are **not** synced to a server.
+Scores are stored in **`localStorage` on this browser only** (top **4** for the current calendar week on the device). They are **not** synced to a server.
 
-On **Game over**, you can:
-
-- **Save image** — PNG of the game-over card (leaderboard + title) via [html2canvas](https://github.com/niklasvh/html2canvas) (loaded from CDN).
-- **Share…** — uses the **Web Share API** where the browser supports sharing files (often mobile); otherwise it falls back to **Save image**.
+On **Game over**, you can **Save image** — PNG of the game-over card (leaderboard + title) via [html2canvas](https://github.com/niklasvh/html2canvas) (loaded from CDN). On **desktop / most browsers** (not iPhone/iPad), the PNG is **downloaded** like a normal file. On **iPhone/iPad**, the **share sheet** is used when possible, otherwise a **full-screen preview** — **long-press the image → Save to Photos**.
 
 **`standalone.html`** (from `node scripts/build-standalone.mjs`) inlines CSS; keep **`game.js`** next to it. The build still loads **html2canvas** from the CDN.
 
@@ -21,7 +18,7 @@ Open `index.html` in your browser:
 
 Put your player sprite at **`hamster-runner/art/hamester.png`** (or `art/hamster.png` as a fallback name). Until the image loads, the game draws the simple vector hamster.
 
-Other art in **`hamster-runner/art/`**: `background.png`, `sunflower_seed.png`, `carrot.png`, `popcorn.png`, `meat.png`, `candy.png`, `icecream.png`, `chocolate.png`, `redheart.png`, barriers `rocks.png`, `tree.png`, `bush.png`, `cat.png` (optional; emojis / vector fallback if missing).
+Other art in **`hamster-runner/art/`**: `background.png`, `leaderboard.png` (game over “Your Best Scores” frame), `highlight.png` (row highlight on that screen), `sunflower_seed.png`, `carrot.png`, `popcorn.png`, `meat.png`, `candy.png`, `icecream.png`, `chocolate.png`, `redheart.png`, barriers `rocks.png`, `tree.png`, `bush.png`, `cat.png` (optional; emojis / vector fallback if missing).
 
 ### Canvas background (why it might look unchanged)
 
@@ -37,9 +34,10 @@ If **none** of those files are in `art/`, you get the **plain dark blue** fallba
 ## Controls
 
 - Move: Left/Right arrows or A/D
-- Pause: Space
+- Pause: Space (not during stage countdown)
 - Restart: R
-- Mobile: tap left/right side of the game
+- Mobile: tap **left/right** halves of the game to move (on-screen arrows show the zones). **Pause** is **Space** only (keyboard); touch does not pause or unpause
+- One **HUD** at the top of the playfield shows **Hamester Run**, **hearts**, **stage + goal** on one line, and the **goal meter**; no separate page header, visit counter, or in-page leaderboard — scores show on **Game over** only.
 
 ## Rules
 

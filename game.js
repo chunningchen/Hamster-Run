@@ -104,7 +104,7 @@ const leaderboardBodyGameOverEl = document.getElementById("leaderboardBodyGameOv
 const tryAgainBtnEl = document.getElementById("tryAgainBtn");
 
 const LEADERBOARD_LS_KEY = "hamsterRunnerLeaderboard_v2";
-const LEADERBOARD_MAX = 10;
+const LEADERBOARD_MAX = 4;
 
 /** Local Sunday 00:00:00 — leaderboard resets each new week at that instant. */
 function getLocalWeekStartMs(t = Date.now()) {
@@ -484,7 +484,8 @@ function effectiveSpawnConfig(stageNum) {
 
 let playerName = "";
 let nameGateActive = true;
-/** ISO `date` of the run just saved, if it appears in the top 10 (game-over row highlight). */
+/** ISO `date` of the run just saved, if it appears in the saved top list (game-over row highlight). */
+/** ISO date of the run just finished, only if that run is in the saved top `LEADERBOARD_MAX` (drives highlight.png row). */
 let lastGameOverLeaderboardHighlight = null;
 
 function isNameGateActive() {
@@ -492,7 +493,18 @@ function isNameGateActive() {
 }
 
 function loadLeaderboardEntries() {
-  return readLeaderboardStore().entries;
+  const { entries } = readLeaderboardStore();
+  if (!Array.isArray(entries) || entries.length === 0) return [];
+  const sorted = [...entries].sort(
+    (a, b) =>
+      b.score - a.score ||
+      (Number(b.timeSec) || 0) - (Number(a.timeSec) || 0)
+  );
+  const top = sorted.slice(0, LEADERBOARD_MAX);
+  if (entries.length > LEADERBOARD_MAX) {
+    saveLeaderboardEntries(top);
+  }
+  return top;
 }
 
 function saveLeaderboardEntries(entries) {
@@ -523,13 +535,7 @@ function formatLeaderboardTime(timeSec) {
 
 function renderLeaderboardInto(tbodyEl, highlightDateIso = null) {
   if (!tbodyEl) return;
-  const rows = loadLeaderboardEntries()
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        (Number(b.timeSec) || 0) - (Number(a.timeSec) || 0)
-    )
-    .slice(0, LEADERBOARD_MAX);
+  const rows = loadLeaderboardEntries();
   tbodyEl.replaceChildren();
   if (rows.length === 0) {
     const tr = document.createElement("tr");
@@ -541,10 +547,12 @@ function renderLeaderboardInto(tbodyEl, highlightDateIso = null) {
     tbodyEl.appendChild(tr);
     return;
   }
+  const showHighlightStrip =
+    Boolean(highlightDateIso) && rows.some((r) => r.date === highlightDateIso);
   for (const e of rows) {
     const tr = document.createElement("tr");
-    if (highlightDateIso && e.date === highlightDateIso) {
-      tr.classList.add("leaderboard-row--current");
+    if (showHighlightStrip && e.date === highlightDateIso) {
+      tr.classList.add("leaderboard-row--qualified");
     }
     const tdDate = document.createElement("td");
     tdDate.textContent = formatLeaderboardDate(e.date);
@@ -595,8 +603,8 @@ function recordLeaderboardScore(score, name, timeSec) {
       (Number(b.timeSec) || 0) - (Number(a.timeSec) || 0)
   );
   const top = list.slice(0, LEADERBOARD_MAX);
-  const inTop10 = top.some((e) => e.date === newEntry.date);
-  lastGameOverLeaderboardHighlight = inTop10 ? newEntry.date : null;
+  const madeLeaderboard = top.some((entry) => entry.date === newEntry.date);
+  lastGameOverLeaderboardHighlight = madeLeaderboard ? newEntry.date : null;
   saveLeaderboardEntries(top);
   renderLeaderboard();
 }
@@ -627,16 +635,125 @@ async function blobPngFromGameOverShareCard() {
   });
 }
 
+function isLikelyIOS() {
+  if (/iPad|iPhone|iPod/i.test(navigator.userAgent)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
+/** When Share / download fail (common on iOS), show the PNG so the user can long-press → Save to Photos. */
+function showLeaderboardImageSaveFallback(blobUrl) {
+  const prevActive = document.activeElement;
+  const wrap = document.createElement("div");
+  wrap.setAttribute("role", "dialog");
+  wrap.setAttribute("aria-modal", "true");
+  wrap.setAttribute("aria-labelledby", "saveImgFallbackTitle");
+  wrap.style.cssText = [
+    "position:fixed",
+    "inset:0",
+    "z-index:20000",
+    "background:rgba(0,0,0,.88)",
+    "display:flex",
+    "flex-direction:column",
+    "align-items:center",
+    "justify-content:center",
+    "padding:max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))",
+    "box-sizing:border-box",
+  ].join(";");
+
+  const inner = document.createElement("div");
+  inner.style.cssText =
+    "max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px";
+
+  const p = document.createElement("p");
+  p.id = "saveImgFallbackTitle";
+  p.style.cssText =
+    "color:#fff;text-align:center;margin:0;font:600 15px system-ui,-apple-system,sans-serif;line-height:1.45;padding:0 4px";
+  p.textContent =
+    "Long-press the image, then tap Save to Photos (or Add to Photos).";
+
+  const img = document.createElement("img");
+  img.src = blobUrl;
+  img.alt = "Leaderboard screenshot";
+  img.style.cssText =
+    "max-width:100%;max-height:min(62vh, 520px);width:auto;height:auto;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);touch-action:manipulation";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = "Close";
+  btn.style.cssText =
+    "padding:12px 24px;border-radius:12px;border:none;font:800 15px system-ui,-apple-system,sans-serif;cursor:pointer;background:#e8fff0;color:#052e16;min-width:120px";
+
+  const close = () => {
+    URL.revokeObjectURL(blobUrl);
+    wrap.remove();
+    document.removeEventListener("keydown", onKey);
+    if (prevActive && typeof prevActive.focus === "function") prevActive.focus();
+  };
+
+  function onKey(e) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+  }
+
+  btn.addEventListener("click", close);
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap) close();
+  });
+  document.addEventListener("keydown", onKey);
+
+  inner.appendChild(p);
+  inner.appendChild(img);
+  inner.appendChild(btn);
+  wrap.appendChild(inner);
+  document.body.appendChild(wrap);
+  btn.focus();
+}
+
+function downloadBlobAsPng(blob, filename) {
+  const u = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement("a");
+    a.href = u;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(u), 120_000);
+  }
+}
+
 async function onSaveLeaderboardImage() {
   try {
     const blob = await blobPngFromGameOverShareCard();
     if (!blob) return;
-    const a = document.createElement("a");
+    const filename = `hamester-run-leaderboard-${Date.now()}.png`;
+
+    /* Desktop / typical web: save straight to Downloads (blob + download attribute). */
+    if (!isLikelyIOS()) {
+      downloadBlobAsPng(blob, filename);
+      return;
+    }
+
+    const file = new File([blob], filename, { type: "image/png" });
+
+    if (navigator.share && navigator.canShare) {
+      try {
+        const shareData = { files: [file], title: "Hamester Run", text: "Your best scores" };
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+
     const u = URL.createObjectURL(blob);
-    a.href = u;
-    a.download = `hamester-run-leaderboard-${Date.now()}.png`;
-    a.click();
-    URL.revokeObjectURL(u);
+    showLeaderboardImageSaveFallback(u);
   } catch (e) {
     console.error(e);
   }
