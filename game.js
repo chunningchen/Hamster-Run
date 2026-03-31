@@ -711,20 +711,6 @@ function resetGame(options) {
 }
 
 function syncHud() {
-  const pauseBtn = document.getElementById("pauseToggleBtn");
-  if (pauseBtn) {
-    const ingame =
-      state.running &&
-      !state.gameOver &&
-      !isNameGateActive() &&
-      !isCountdownActive();
-    pauseBtn.hidden = !ingame;
-    if (ingame) {
-      pauseBtn.textContent = state.paused ? "Resume" : "Pause";
-      pauseBtn.setAttribute("aria-label", state.paused ? "Resume game" : "Pause game");
-    }
-  }
-
   if (heartsValueEl) {
     const cur = Math.floor(state.hpHalves / 2);
     heartsValueEl.textContent = `${cur}/${MAX_HEARTS}`;
@@ -1445,24 +1431,16 @@ function togglePause() {
   if (state.gameOver || isNameGateActive() || isCountdownActive()) return;
   state.paused = !state.paused;
   if (state.paused) {
-    showBanner("Paused — tap Resume or the playfield, or press Space", null);
+    showBanner("Paused — press Space to resume", null);
   } else {
     hideBanner();
   }
-  syncHud();
   syncBgmToGameState();
 }
 
 function onPointerDown(e) {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
-
-  if (!isNameGateActive() && !state.gameOver && state.paused) {
-    togglePause();
-    e.preventDefault();
-    return;
-  }
-
   if (x < rect.width * 0.5) moveLane(-1);
   else moveLane(1);
 }
@@ -1494,12 +1472,6 @@ playerNameInputEl?.addEventListener("keydown", (e) => {
 });
 
 tryAgainBtnEl?.addEventListener("click", () => returnToWelcomeFromGameOver());
-
-document.getElementById("pauseToggleBtn")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  togglePause();
-});
 
 initGameOverSaveButton();
 renderLeaderboard();
